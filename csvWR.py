@@ -1,10 +1,17 @@
 import csv
 
+with open("sockets.csv",newline="") as f_in, \
+     open("sock.csv","w",newline="") as f_out:
+     reader = csv.DictReader(f_in)
+     writer = csv.DictWriter(f_out, fieldnames=["id","username","password"])
+     writer.writeheader()
+     for row in reader:
+         if len(row["password"]) < 5:
+             writer.writerow(row)
 
-with open("sockets.csv","r") as file:
-    reader = csv.reader(file)
 
-    with open("New_sockets.csv","w") as f:
-        writer=csv.writer(f)
-        for lines in reader:
-            writer.writerow(lines)
+
+
+
+
+
