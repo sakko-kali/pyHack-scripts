@@ -1,0 +1,21 @@
+{
+  "network": "192.168.0.0/24",
+  "hosts": [
+    {
+      "ip": "192.168.0.10",
+      "os": "Linux",
+      "ports": [
+        {"port": 22, "service": "ssh", "status": "open"},
+        {"port": 80, "service": "http", "status": "closed"}
+      ]
+    },
+    {
+      "ip": "192.168.0.15",
+      "os": "Windows",
+      "ports": [
+        {"port": 3389, "service": "rdp", "status": "open"},
+        {"port": 445, "service": "smb", "status": "open"}
+      ]
+    }
+  ]
+}
