@@ -1,15 +1,25 @@
 import socket
 
-s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-s.bind(("127.0.0.1", 5089))  # слушаем только localhost
-s.listen(10)
+s = socket.socket()
+s.bind(("127.0.0.1", 6000))
+s.listen()
 
-print("Server started")
-
+print("Ожидание подключения...")
 conn, addr = s.accept()
-print("KUMALALALALALLAALALALALAALALALALALAL:", addr)
+print("Connected:", addr)
 
-conn.sendall(b"Hello KUMALALALALALLAALALALALAALALALALALALKUMALALALALALLAALALALALAALALALALALALKUMALALALALALLAALALALALAALALALALALALKUMALALALALALLAALALALALAALALALALALALKUMALALALALALLAALALALALAALALALALALALKUMALALALALALLAALALALALAALALALALALALKUMALALALALALLAALALALALAALALALALALALKUMALALALALALLAALALALALAALALALALALALKUMALALALALALLAALALALALAALALALALALALKUMALALALALALLAALALALALAALALALALALALKUMALALALALALLAALALALALAALALALALALALKUMALALALALALLAALALALALAALALALALALAL! \n")
+while True:
+    data = conn.recv(1024)
+    if not data:
+        break  # клиент отключился
+    message = data.decode()
+
+    if message.strip() == "exit":
+        print("Клиент вышел")
+        break
+
+    print("Клиент:", message)
+    conn.sendall(("Эхо: " + message).encode())
 
 conn.close()
 s.close()
