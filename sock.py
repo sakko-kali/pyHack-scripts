@@ -2,7 +2,7 @@ import socket
 
 s = socket.socket()
 s.bind(("127.0.0.1", 6000))
-s.listen()
+s.listen(1)
 
 print("Ожидание подключения...")
 conn, addr = s.accept()
@@ -12,14 +12,15 @@ while True:
     data = conn.recv(1024)
     if not data:
         break  # клиент отключился
-    message = data.decode()
+    message = data.decode().strip()
 
-    if message.strip() == "exit":
+    if message == "bye":
         print("Клиент вышел")
         break
 
-    print("Клиент:", message)
-    conn.sendall(("Эхо: " + message).encode())
+    print(message,"\n Введите ответ")
+    out_message = input() + "\n"
+    conn.sendall((out_message).encode())
 
 conn.close()
 s.close()
