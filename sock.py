@@ -1,26 +1,37 @@
-import socket
+import socket, threading
 
-s = socket.socket()
-s.bind(("127.0.0.1", 6000))
-s.listen(1)
+def handle_recive(sock,addr):
+    while True:
+        data = sock.recv(1024)
+        if not data:
+            print(f"Client: {addr} Disconnected!")
+            sock.close()
+            break
+        message = data.decode().strip()
+        if message.lower() == "bye":
+            sock.send(b"Bye! Have a good day\n")
+            sock.close()
+            break
+        print(message)
+
+def heandle_send(sock):
+    while True:
+        message = input() + "\n"
+        sock.sendall(message.encode())
+
+sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+sock.bind(("192.168.1.8", 6000))
+sock.listen(2)
+
 
 print("Ожидание подключения...")
-conn, addr = s.accept()
-print("Connected:", addr)
+conn, addr = sock.accept()
+print("Подключен:", addr)
 
-while True:
-    data = conn.recv(1024)
-    if not data:
-        break  # клиент отключился
-    message = data.decode().strip()
+threading.Thread(target=handle_recive, args=(conn, addr), daemon=True).start()
+heandle_send(conn)
 
-    if message == "bye":
-        print("Клиент вышел")
-        break
+sock.close()
 
-    print(message,"\n Введите ответ")
-    out_message = input() + "\n"
-    conn.sendall((out_message).encode())
 
-conn.close()
-s.close()
+
