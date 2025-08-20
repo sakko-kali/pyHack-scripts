@@ -1,37 +1,68 @@
-import socket, threading
+import socket
+import threading
 
-def handle_recive(sock,addr):
+# Список всех клиентов
+clients = []
+
+
+def handle_send():
     while True:
-        data = sock.recv(1024)
-        if not data:
-            print(f"Client: {addr} Disconnected!")
-            sock.close()
-            break
-        message = data.decode().strip()
+        message = input("SERVER: ").strip()
         if message.lower() == "bye":
-            sock.send(b"Bye! Have a good day\n")
-            sock.close()
+            print("Сервер завершает работу...")
+            # посылаем клиентам уведомление и выходим
+            for client in clients:
+                client.sendall(b"Server is shutting down...\n")
+                client.close()
             break
-        print(message)
+        # рассылаем серверное сообщение всем клиентам
+        for client in clients:
+            client.sendall(f"[SERVER]: {message}\n".encode())
 
-def heandle_send(sock):
+def handle_client(conn, addr):
+    print(f"[+] Подключился {addr}")
+    clients.append(conn)
+
+    try:
+        while True:
+            data = conn.recv(1024)
+            if not data:
+                break
+            message = data.decode().strip()
+            print(f"{addr}: {message}")
+
+            if message.lower() == "bye":
+                conn.send(b"Bye!")
+                break
+
+            # Рассылка всем клиентам кроме отправителя
+            for client in clients:
+                if client != conn:
+                    client.sendall(f"{addr}: {message}\n".encode())
+
+    except ConnectionResetError:
+        print(f"[-] Клиент {addr} отключился внезапно")
+
+    finally:
+        clients.remove(conn)
+        conn.close()
+        print(f"[-] Отключен {addr}")
+
+
+def start_server():
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.bind(("0.0.0.0", 6001))  # слушаем на всех интерфейсах
+    sock.listen(5)
+    print("Сервер запущен на порту 6000...")
+
+    threading.Thread(target=handle_send, daemon=True).start()
+
     while True:
-        message = input() + "\n"
-        sock.sendall(message.encode())
-
-sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-sock.bind(("192.168.1.8", 6000))
-sock.listen(2)
+        conn, addr = sock.accept()
+        thread = threading.Thread(target=handle_client, args=(conn, addr))
+        thread.daemon = True
+        thread.start()
 
 
-print("Ожидание подключения...")
-conn, addr = sock.accept()
-print("Подключен:", addr)
-
-threading.Thread(target=handle_recive, args=(conn, addr), daemon=True).start()
-heandle_send(conn)
-
-sock.close()
-
-
-
+if __name__ == "__main__":
+    start_server()
