@@ -8,31 +8,42 @@ clients = []
 
 def server_start():
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.bind(("0.0.0.0", 6000))
+    sock.bind(("0.0.0.0", 6001))
     sock.listen(5)
 
     print("Ждем подключений")
     threading.Thread(target=hendle_send, daemon=True).start()
 
-    while True:
-        conn, addr = sock.accept()
-        print(f"Клиент: {addr} подключился")
+    while running:
+        try:
+            conn, addr = sock.accept()
+        except OSError:
+            break  # сокет закрыт
+        print(f"Клиент {addr} подключился")
         clients.append(conn)
-        threading.Thread(target=hendle_recive, args=(conn,addr), daemon=True).start()
+        threading.Thread(target=hendle_recive, args=(conn, addr), daemon=True).start()
+
+    sock.close()
+    print("Сервер завершил работу")
 
 
 def hendle_recive(conn,addr):
     while True:
-        message = conn.recv(1024).decode().strip()
-        print(addr, message)
-        if message == "bye":
-            conn.sendall(b"Server off\n")
-            conn.close()
-            sys.exit(0)
-        for client in clients:
-            if client != conn:
-                client.sendall(f"{addr}: {message}\n".encode())
+        try:
+            message = conn.recv(1024).decode().strip()
+        except OSError:
 
+            break
+        finally:
+            print(addr, message)
+            for client in clients:
+                if message == "bye":
+                    client.sendall(b"Server off\n")
+                    print(f"Client {addr} disconnected")
+                    client.close()
+                    clients.remove(client)
+                elif client != conn:
+                    client.sendall(f"{addr}: {message}\n".encode())
 
 def hendle_send():
     while True:
